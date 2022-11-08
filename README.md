@@ -22,3 +22,10 @@
 Works only for Crystal Data Center.
 
 May not work if you use different UI settings than me.
+
+## Known issues
+
+1. Works only on 1900x1080 resolution
+1. Was tested only on borderless window
+1. Works only on 100% UI settings scaling
+1. Works only with dark theme
