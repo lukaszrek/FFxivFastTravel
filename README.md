@@ -2,12 +2,12 @@
 
 ## Standalone executable
 
-1. Download [fasttravel.exe](https://github.com/lukaszrek/FFxivFastTravel/releases/download/latest/fasttravel.exe).
+1. Download [fasttravel.exe](https://github.com/lukaszrek/FFxivFastTravel/releases/latest/download/fasttravel.exe).
 
 ## AutoHotkey Script
 
 1. Download and instal [AutoHotkey](https://www.autohotkey.com)
-1. Download [fasttravel.zip](https://github.com/lukaszrek/FFxivFastTravel/releases/download/latest/fasttravel.zip).
+1. Download [fasttravel.zip](https://github.com/lukaszrek/FFxivFastTravel/releases/latest/download/fasttravel.zip).
 1. Extract somewhere
 1. Double click fasttravel.ahk to run it
 
