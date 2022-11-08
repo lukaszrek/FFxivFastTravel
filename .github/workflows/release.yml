@@ -23,6 +23,7 @@ jobs:
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: fasttravel.zip 
+          exclusions: '*.git*
 
       - name: Ahk2Exe
         uses: nekocodeX/GitHub-Action-Ahk2Exe@v1.1.0
