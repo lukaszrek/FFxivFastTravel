@@ -1,8 +1,12 @@
-﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-#Warn  ; Enable warnings to assist with detecting common errors.
-#SingleInstance
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+﻿
+
+#Include resources.ahk
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+;#Warn  ; Enable warnings to assist with detecting common errors.
+#SingleInstance Force
+
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+
 
 
 SetKeyDelay 10, 60
@@ -10,31 +14,26 @@ SetMouseDelay 10, 60
 
 ; FF14WND = "ahk_class FFXIVGAME"
 
-global REGION_OX := new Region(35, 990, 106, 1047, "ox.png")
-global REGION_SELECT_DATA_CENTER := new Region(728, 466, 915, 491, "SelectDataCenter.png")
-global REGION_PROCEED := new Region(764, 708, 943, 750, "Proceed.png")
-global REGION_OK := new Region(800, 500, 1100, 700, "OK.png")
-global REGION_CRYSTAL := new Region(790, 460, 900, 510, "Crystal.png")
+global REGION_OX := new Region(35, 990, 106, 1047, Images.ox)
+global REGION_SELECT_DATA_CENTER := new Region(728, 466, 915, 491, Images.selectdatacenter)
+global REGION_PROCEED := new Region(764, 708, 943, 750, Images.proceed)
+global REGION_OK := new Region(800, 500, 1100, 700, Images.ok)
+global REGION_CRYSTAL := new Region(790, 460, 900, 510, Images.crystal)
 
 
-global DATA_CENTERS := new DataCenters(2 ; home dc's index, start from 1-> Crystal
-	, new DataCenter("Aether", new Region(1400, 90, 1700, 130, "Aether.png"))
-	, new DataCenter("Crystal",new Region(25, 500, 200, 600, "TraveledFrom.png"), true)
-	, new DataCenter("Dynamis", new Region(1400, 90, 1700, 130, "Dynamis.png"))
-	, new DataCenter("Primal", new Region(1400, 90, 1700, 130, "Primal.png")))
+global DATA_CENTERS := new DataCenters(2 ; home dc's index, start from 1 -> Crystal
+	, new DataCenter("Aether", new Region(1400, 90, 1700, 130, Images.aether))
+	, new DataCenter("Crystal",new Region(25, 500, 200, 600, Images.traveledfrom), true)
+	, new DataCenter("Dynamis", new Region(1400, 90, 1700, 130, Images.dynamis))
+	, new DataCenter("Primal", new Region(1400, 90, 1700, 130, Images.primal)))
 	; order needs to be same as in game
 
 
 ; restart script hotkey
-F1::
+^!+o::
 	BlockInput, MouseMoveOff
 	SoundPlay, *64
 	Reload
-	return
-
-F2::
-	currentDc := DATA_CENTERS._RefreshCurrentDc()
-	MsgBox "Current DC: " . %currentDc%
 	return
 
 ; datacenter travel hotkey
@@ -70,7 +69,21 @@ F2::
 
 SafeSend(keys*) {
     for i, key in keys {
-		Send %key%
+		if (key == "LEFT") {
+			Send ^!+{Left}
+			Send {Numpad4}
+		} else if (key == "RIGHT") {
+			Send ^!+{Right}
+			Send {Numpad6}
+		} else if (key == "DOWN") {
+			Send ^!+{Down}
+			Send {Numpad2}
+		} else if (key == "UP") {
+			Send ^!+{Up}
+			Send {Numpad8}
+		} else {
+			Send %key%
+		}
 		Sleep, 100
 	}
 }
@@ -84,7 +97,7 @@ class DataCenters {
 			dc.Offset := i - DcHomeIndex
 		}
 		this.DcHome := this.DcArray[DcHomeIndex]
-		this.UnknownAwayDc := new DataCenter("Unknown Data Center Away From Home", new Region(1, 1, 2, 2, "OK.png"))
+		this.UnknownAwayDc := new DataCenter("Unknown Data Center Away From Home", new Region(1, 1, 2, 2, Images.ok)) ; Dummy region
 
 	}
 
@@ -124,8 +137,8 @@ class DataCenters {
 	Travel(Name) {
 		for i, dc in this.DcArray {
 			if (InStr(Name, dc.Name)) {
-					travelTo := dc
-					break
+				travelTo := dc
+				break
 			}
 		}
 
@@ -141,7 +154,6 @@ class DataCenters {
 	}
 
 	_InitTravel() {
-		SoundPlay, *64
 		BlockInput, MouseMove
 		SafeSend("{Esc}", "{Esc}")
 	}
@@ -177,7 +189,7 @@ class DataCenter {
 		this._NavigateToTravelInterface()
 
 		REGION_CRYSTAL.AwaitUntilVisible()
-		SafeSend("{Numpad4}", "{Numpad0}") ; accept returning to home data center
+		SafeSend("LEFT", "{Numpad0}") ; accept returning to home data center
 
 		this._AcceptAndFinishTravel()
 	}
@@ -197,15 +209,15 @@ class DataCenter {
 
 	_NavigateToTravelInterface() {
 		SafeSend("{NumpadMult}"
-			   , "{Numpad2}"
-			   , "{Numpad2}"
-			   , "{Numpad2}"
+			   , "DOWN"
+			   , "DOWN"
+			   , "DOWN"
 			   , "{Numpad0}")
 	}
 
 	_AcceptAndFinishTravel() {
 		REGION_PROCEED.AwaitUntilVisible()
-		SafeSend("{Numpad4}", "{Numpad0}")
+		SafeSend("LEFT", "{Numpad0}")
 
 		REGION_OK.AwaitUntilVisible()
 		SafeSend("{Numpad0}")
@@ -219,10 +231,10 @@ class DataCenter {
 		offset := this.Offset
 		key := ""
 		if (offset < 0) {
-			key := "{Numpad8}"
+			key := "UP"
 			offset := -offset
 		} else {
-			key := "{Numpad2}"
+			key := "DOWN"
 		}
 		while (offset > 0) {
 			SafeSend(key)
@@ -250,24 +262,23 @@ class RegionMatcher {
 
 class Region {
 
-	__New(X1, Y1, X2, Y2, FileName) {
+	__New(X1, Y1, X2, Y2, hImage) {
 		this.X1 := X1
 		this.Y1 := Y1
 		this.X2 := X2
 		this.Y2 := Y2
-		this.FileName := FileName
+		this.hImage := hImage
 	}
 
 
 	IsVisible() {
-		FileName := this.FileName
-		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, *100 *Trans00FF00 %FileName%
+		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*100 *Trans00FF00 HBITMAP:*" . this.hImage
 		if (ErrorLevel == 0) {
 			return true
 		} else if (ErrorLevel == 1) {
 			return false
 		} else {
-			MsgBox "Error" . %ErrorLevel%
+			MsgBox % "Error: " . ErrorLevel . " " . this.hImage
 		}
 	}
 
