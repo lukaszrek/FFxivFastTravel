@@ -345,7 +345,7 @@ class Region {
 
 
 	IsVisible() {
-		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*80 *Trans00FF00 HBITMAP:*" . this.hImage
+		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*100 *Trans00FF00 HBITMAP:*" . this.hImage
 		if (ErrorLevel == 0) {
 			return true
 		} else if (ErrorLevel == 1) {
