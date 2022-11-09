@@ -1,75 +1,98 @@
-﻿;@Ahk2Exe-let AetherPng = , AetherI = 1
+﻿;@Ahk2Exe-AddResource images/aether10.png, #1
+;@Ahk2Exe-AddResource images/aether15.png, #2
+;@Ahk2Exe-AddResource images/crystal10.png, #3
+;@Ahk2Exe-AddResource images/crystal15.png, #4
+;@Ahk2Exe-AddResource images/dynamis10.png, #5
+;@Ahk2Exe-AddResource images/dynamis15.png, #6
+;@Ahk2Exe-AddResource images/ok10.png, #7
+;@Ahk2Exe-AddResource images/ok15.png, #8
+;@Ahk2Exe-AddResource images/ox10.png, #9
+;@Ahk2Exe-AddResource images/ox15.png, #10
+;@Ahk2Exe-AddResource images/primal10.png, #11
+;@Ahk2Exe-AddResource images/primal15.png, #12
+;@Ahk2Exe-AddResource images/proceed10.png, #13
+;@Ahk2Exe-AddResource images/proceed15.png, #14
+;@Ahk2Exe-AddResource images/selectdatacenter10.png, #15
+;@Ahk2Exe-AddResource images/selectdatacenter15.png, #16
+;@Ahk2Exe-AddResource images/traveled10.png, #17
+;@Ahk2Exe-AddResource images/traveled15.png, #18
 
 
-;@Ahk2Exe-AddResource images/Aether.png, 1
-;@Ahk2Exe-AddResource images/Crystal.png, #2
-;@Ahk2Exe-AddResource images/Dynamis.png, #3
-;@Ahk2Exe-AddResource images/OK.png, #4
-;@Ahk2Exe-AddResource images/ox.png, #5
-;@Ahk2Exe-AddResource images/Primal.png, #6
-;@Ahk2Exe-AddResource images/Proceed.png, #7
-;@Ahk2Exe-AddResource images/SelectDataCenter.png, #8
-;@Ahk2Exe-AddResource images/TraveledFrom.png, #9
+global Scales := [10, 15]
 
-
-_Descriptors := [new ImgDsc("aether", "images/Aether.png", 1)
-		, new ImgDsc("crystal", "images/Crystal.png", 2)
-		, new ImgDsc("dynamis", "images/Dynamis.png", 3)
-		, new ImgDsc("ok", "images/OK.png", 4)
-        , new ImgDsc("ox", "images/ox.png", 5)
-		, new ImgDsc("primal", "images/Primal.png", 6)
-		, new ImgDsc("proceed", "images/Proceed.png", 7)
-		, new ImgDsc("selectdatacenter", "images/SelectDataCenter.png", 8)
-		, new ImgDsc("traveledfrom", "images/TraveledFrom.png", 9)]
+ImagePrototypes := [new ImageProto("aether", 1)
+		, new ImageProto("crystal", 3)
+		, new ImageProto("dynamis", 5)
+		, new ImageProto("ok", 7)
+        , new ImageProto("ox", 9)
+		, new ImageProto("primal", 11)
+		, new ImageProto("proceed", 13)
+		, new ImageProto("selectdatacenter", 15)
+		, new ImageProto("traveled", 17)]
 
 if A_IsCompiled {
-	global Images := new CompiledImages(_Descriptors)
+	global Images := new CompiledImages(ImagePrototypes)
 } else {
-	global Images := new ScriptImages(_Descriptors)
+	global Images := new ScriptImages(ImagePrototypes)
 }
 
 
-class ImgDsc {
 
-	__New(Name, Path, Index) {
+
+
+class ImageProto {
+
+	__New(Name, Index) {
 			this.Name := Name
-			this.Path := Path
 			this.Index := Index
 	}
 
-	LoadFromFile() {
-		return LoadPicture(this.Path)
+	_Path(scale) {
+		return "images/" . this.Name . scale . ".png"
 	}
 
-	LoadFromResource(hModule) {
-		return LoadImageFromDll(hModule, this.Index)
+	LoadFromFile(scale) {
+		return LoadPicture(this._Path(scale))
+	}
+
+	LoadFromResource(hModule, offset) {
+		return LoadImageFromDll(hModule, this.Index + offset)
 	}
 }
 
 class ImagesBase {
 
 	__Get(key) {
+		return this.Get(key)
+	}
+
+	Get(key) {
 		return this.Imgs[key]
 	}
 }
 
 class ScriptImages extends ImagesBase {
-	__New(Dscs) {
+	__New(prototypes) {
 		this.Imgs := []
-		for indx, dsc in Dscs {
-			this.Imgs[dsc.Name] := dsc.LoadFromFile()
+		for i, proto in prototypes {
+			for j, scale in Scales {
+				this.Imgs[proto.Name . scale] := proto.LoadFromFile(scale)
+			}
 		}
 	}
 }
 
 class CompiledImages extends ImagesBase {
 
-	__New(Dscs) {
+	__New(prototypes) {
 		this.Imgs := []
 	    GdiStartup()
 		hModule := DllCall("GetModuleHandle", "Str", A_ScriptFullPath, "Ptr")
-		for indx, dsc in Dscs {
-			this.Imgs[dsc.Name] := dsc.LoadFromResource(hModule)
+		;hModule := DllCall("LoadLibrary", "Str", "fasttravel.exe", "Ptr")
+		for i, proto in prototypes {
+			for j, scale in Scales {
+				this.Imgs[proto.Name . scale] := proto.LoadFromResource(hModule, j - 1)
+			}
 		}
 	}
 }

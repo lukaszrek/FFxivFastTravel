@@ -12,21 +12,83 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetKeyDelay 10, 60
 SetMouseDelay 10, 60
 
-; FF14WND = "ahk_class FFXIVGAME"
+; FF14WND = "ahk_class FFXIVGAME"/
 
-global REGION_OX := new Region(35, 990, 106, 1047, Images.ox)
+
 global REGION_SELECT_DATA_CENTER := new Region(728, 466, 915, 491, Images.selectdatacenter)
-global REGION_PROCEED := new Region(764, 708, 943, 750, Images.proceed)
 global REGION_OK := new Region(800, 500, 1100, 700, Images.ok)
 global REGION_CRYSTAL := new Region(790, 460, 900, 510, Images.crystal)
 
 
 global DATA_CENTERS := new DataCenters(2 ; home dc's index, start from 1 -> Crystal
-	, new DataCenter("Aether", new Region(1400, 90, 1700, 130, Images.aether))
-	, new DataCenter("Crystal",new Region(25, 500, 200, 600, Images.traveledfrom), true)
-	, new DataCenter("Dynamis", new Region(1400, 90, 1700, 130, Images.dynamis))
-	, new DataCenter("Primal", new Region(1400, 90, 1700, 130, Images.primal)))
+	, new DataCenter("Aether", "aether")
+	, new DataCenter("Crystal", "traveled", true)
+	, new DataCenter("Dynamis", "dynamis")
+	, new DataCenter("Primal", "primal"))
 	; order needs to be same as in game
+
+
+
+
+
+
+class RegionProto {
+
+	__New(Name, X1, Y1, X2, Y2) {
+		this.Name := Name
+		this.X1 := X1
+		this.Y1 := Y1
+		this.X2 := X2
+		this.Y2 := Y2
+	}
+
+	FullName(Suffix) {
+		return this.Name . Suffix
+	}
+
+	CreateRegion(Suffix) {
+		return new Region(this.FullName(Suffix), this.X1, this.Y1, this.X2, this.Y2, Images.Get(this.FullName(Suffix)))
+	}
+}
+
+REGION_PROTOS := [new RegionProto("ox", 0, 600, 600, 1080)
+	, new RegionProto("selectdatacenter", 600, 400, 1100, 700)
+	, new RegionProto("proceed", 500, 500, 1200, 1000)
+	, new RegionProto("ok", 200, 200, 1620, 800)
+	, new RegionProto("traveled", 0, 0, 600, 1080)
+	, new RegionProto("aether", 1000, 0, 1920, 400)
+	, new RegionProto("dynamis", 1000, 0, 1920, 400)
+	, new RegionProto("primal", 1000, 0, 1920, 400)
+	, new RegionProto("crystal", 600, 300, 1000, 600)]
+
+global regions = new Regions(REGION_PROTOS)
+
+class Regions {
+
+
+	__New(protos) {
+		this.regions := []
+		for i, proto in protos {
+			for j, scale in Scales {
+				this.regions[proto.FullName(scale)] := proto.CreateRegion(scale)
+			}
+		}
+	}
+
+	Initialize() {
+		this.Scale := 0
+		if (this.regions["ox10"].IsVisible()) {
+			this.Scale := 10
+		} else if (this.regions["ox15"].IsVisible()) {
+			this.Scale := 15
+		}
+		return this.Scale > 0
+	}
+
+	Get(key) {
+		return this.regions[key . this.Scale]
+	}
+}
 
 
 ; restart script hotkey
@@ -39,7 +101,7 @@ global DATA_CENTERS := new DataCenters(2 ; home dc's index, start from 1 -> Crys
 ; datacenter travel hotkey
 ^!+p::
 	ShowGui() {
-		if (REGION_OX.IsVisible()) {
+		if (regions.Initialize()) {
 			Gui, -SysMenu ToolWindow
 			Gui, Add, Text,, Select DC you want to travel to:
 			for i, name in DATA_CENTERS.DcList() {
@@ -97,7 +159,7 @@ class DataCenters {
 			dc.Offset := i - DcHomeIndex
 		}
 		this.DcHome := this.DcArray[DcHomeIndex]
-		this.UnknownAwayDc := new DataCenter("Unknown Data Center Away From Home", new Region(1, 1, 2, 2, Images.ok)) ; Dummy region
+		this.UnknownAwayDc := new DataCenter("Unknown Data Center Away From Home", new Region("asd", 1, 1, 2, 2, Images.ok)) ; Dummy region
 
 	}
 
@@ -142,7 +204,6 @@ class DataCenters {
 			}
 		}
 
-
 		this._InitTravel()
 		if (this.CurrentDc != this.DcHome) {
 			this.DcHome.Travel()
@@ -168,9 +229,9 @@ class DataCenters {
 
 class DataCenter {
 
-	__New(Name, RegionObj, InverseMatch := False) {
+	__New(Name, RegionName, InverseMatch := False) {
 		this.Name := Name
-		this.Matcher := new RegionMatcher(RegionObj, InverseMatch)
+		this.Matcher := new RegionMatcher(RegionName, InverseMatch)
 	}
 
 	IsCurrent() {
@@ -188,7 +249,7 @@ class DataCenter {
 	_TravelHome() {
 		this._NavigateToTravelInterface()
 
-		REGION_CRYSTAL.AwaitUntilVisible()
+		regions.get("crystal").AwaitUntilVisible()
 		SafeSend("LEFT", "{Numpad0}") ; accept returning to home data center
 
 		this._AcceptAndFinishTravel()
@@ -198,7 +259,7 @@ class DataCenter {
 		this._NavigateToTravelInterface()
 		SafeSend("{Numpad0}")	; one more dialog to accept
 
-		REGION_SELECT_DATA_CENTER.AwaitUntilVisible()
+		regions.Get("selectdatacenter").AwaitUntilVisible()
 		this._MoveOnDataCenterList(offset)
 		SafeSend("{Numpad0}", "{Numpad0}", "{Numpad0}")	; accept data center to travel to
 
@@ -216,13 +277,13 @@ class DataCenter {
 	}
 
 	_AcceptAndFinishTravel() {
-		REGION_PROCEED.AwaitUntilVisible()
+		regions.Get("proceed").AwaitUntilVisible()
 		SafeSend("LEFT", "{Numpad0}")
 
-		REGION_OK.AwaitUntilVisible()
+		regions.Get("ok").AwaitUntilVisible()
 		SafeSend("{Numpad0}")
 
-		REGION_OX.AwaitUntilVisible()
+		regions.Get("ox").AwaitUntilVisible()
 	}
 
 
@@ -246,23 +307,35 @@ class DataCenter {
 }
 
 class RegionMatcher {
-	__New(RegionObj, Inverse := False) {
-		this.RegionObj := RegionObj
+	__New(RegionName, Inverse := False) {
+		this.RegionName := RegionName
 		this.Inverse := Inverse
 	}
 
 	Matches() {
 		if (this.Inverse) {
-			return !this.RegionObj.IsVisible()
+			return !regions.get(this.RegionName).IsVisible()
 		} else {
-			return this.RegionObj.IsVisible()
+			return regions.get(this.RegionName).IsVisible()
 		}
 	}
 }
 
+Test(file) {
+		ImageSearch,,, 0, 0, 1920, 1080, % "*100 *Trans00FF00 " . file
+		if (ErrorLevel == 0) {
+			return true
+		} else if (ErrorLevel == 1) {
+			return false
+		} else {
+			MsgBox % "Error: " . ErrorLevel . " " . this.hImage
+		}
+}
+
 class Region {
 
-	__New(X1, Y1, X2, Y2, hImage) {
+	__New(Name, X1, Y1, X2, Y2, hImage) {
+		this.Name := Name
 		this.X1 := X1
 		this.Y1 := Y1
 		this.X2 := X2
@@ -272,13 +345,13 @@ class Region {
 
 
 	IsVisible() {
-		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*100 *Trans00FF00 HBITMAP:*" . this.hImage
+		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*80 *Trans00FF00 HBITMAP:*" . this.hImage
 		if (ErrorLevel == 0) {
 			return true
 		} else if (ErrorLevel == 1) {
 			return false
 		} else {
-			MsgBox % "Error: " . ErrorLevel . " " . this.hImage
+			MsgBox % "Failed too lookup region " . this.Name . "`nError: " . ErrorLevel . " " . this.hImage
 		}
 	}
 
