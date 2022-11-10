@@ -20,12 +20,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Write Version to File
-        run: echo "${{  github.ref_name }}" > .version
-          
+        run: echo "global version := \"${{  github.ref_name }}\"" > version.ahk
+
       - name: Zip
         uses: TheDoctor0/zip-release@0.6.2
         with:
-          filename: fasttravel.zip 
+          filename: fasttravel.zip
           exclusions: '*.git*'
 
       - name: Ahk2Exe
@@ -37,8 +37,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           file: fasttravel.exe
-          
+
       - name: Release Zip
-        uses: svenstaro/upload-release-action@v2    
+        uses: svenstaro/upload-release-action@v2
         with:
           file: fasttravel.zip

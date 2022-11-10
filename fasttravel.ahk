@@ -7,6 +7,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetKeyDelay 10, 60
 SetMouseDelay 10, 60
 
+#Include version.ahk
 #Include menu.ahk
 #Include resources.ahk
 #Include regions.ahk

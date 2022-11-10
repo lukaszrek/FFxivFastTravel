@@ -1,5 +1,4 @@
 
-global version := ReadVersion()
 global optionsImageMatchingSensitivitySlider := 0
 global optionsImageMatchingSensitivityText := 0
 global optionsImageMatchingSensitivityWarning := 0
@@ -8,17 +7,6 @@ global settings = new CSettings()
 
 InitializeMenu()
 InitializeOptionsGui()
-
-ReadVersion() {
-	file := FileOpen(".version", "r")
-	v := Trim(file.ReadLine())
-	file.Close()
-	if (v == "${VERSION}") {
-		return "UNKNOWN"
-	} else {
-		return v
-	}
-}
 
 InitializeMenu() {
 	VersionText := "FastTraval v" . version,
