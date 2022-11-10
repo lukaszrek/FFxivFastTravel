@@ -20,11 +20,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Write Version to File
-        uses: DamianReeves/write-file-action@v1.0
-        with:
-          path: .version
-          contents: ${{ env.GITHUB_REF_NAME }}
-          write-mode: overwrite
+        run: echo $GITHUB_REF_NAME > .version
           
       - name: Zip
         uses: TheDoctor0/zip-release@0.6.2
