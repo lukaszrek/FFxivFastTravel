@@ -18,9 +18,9 @@
 ;@Ahk2Exe-AddResource images/traveled15.png, #18
 
 
-global Scales := [10, 15]
+global scales := [10, 15]
 
-ImagePrototypes := [new ImageProto("aether", 1)
+imagePrototypes := [new ImageProto("aether", 1)
 		, new ImageProto("crystal", 3)
 		, new ImageProto("dynamis", 5)
 		, new ImageProto("ok", 7)
@@ -31,20 +31,17 @@ ImagePrototypes := [new ImageProto("aether", 1)
 		, new ImageProto("traveled", 17)]
 
 if A_IsCompiled {
-	global Images := new CompiledImages(ImagePrototypes)
+	global images := new CompiledImages(ImagePrototypes)
 } else {
-	global Images := new ScriptImages(ImagePrototypes)
+	global images := new ScriptImages(ImagePrototypes)
 }
-
-
-
 
 
 class ImageProto {
 
-	__New(Name, Index) {
-			this.Name := Name
-			this.Index := Index
+	__New(name, index) {
+			this.Name := name
+			this.Index := index
 	}
 
 	_Path(scale) {
@@ -75,7 +72,7 @@ class ScriptImages extends ImagesBase {
 	__New(prototypes) {
 		this.Imgs := []
 		for i, proto in prototypes {
-			for j, scale in Scales {
+			for j, scale in scales {
 				this.Imgs[proto.Name . scale] := proto.LoadFromFile(scale)
 			}
 		}
@@ -104,14 +101,15 @@ GdiStartup() {
 	DllCall("gdiplus\GdiplusStartup", "uint*", pToken, "uint", &si, "uint", 0)
 }
 
-LoadImageFromDll(hModule, Value) {
-	hResourceInfo := DllCall("FindResource", "Ptr", hModule, "Int", Value, "Int", 10, "Ptr")
+LoadImageFromDll(hModule, index) {
+	hResourceInfo := DllCall("FindResource", "Ptr", hModule, "Int", index, "Int", 10, "Ptr")
 	size := DllCall("SizeofResource", "Ptr", hModule, "Ptr", hResourceInfo, "UInt")
 	hResource := DllCall("LoadResource", "Ptr", hModule, "Ptr", hResourceInfo, "Ptr")
 	pBytes := DllCall("LockResource", "Ptr", hResource, "Ptr")
 	stream := DllCall("Shlwapi\SHCreateMemStream", "Ptr", pBytes, "UInt", size, "Ptr")
-
+	pBitmap := 0
 	result := DllCall("gdiplus\GdipCreateBitmapFromStream", "Ptr", stream, "Ptr*", pBitmap, "Int")
+	hBitmap := 0
 	result := DllCall("gdiplus\GdipCreateHBITMAPFromBitmap", "Ptr", pBitmap, "Ptr*", hBitmap, "Int", 0, "Int")
 	return hBitmap
 }

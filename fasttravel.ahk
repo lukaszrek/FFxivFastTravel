@@ -1,94 +1,23 @@
-﻿
-
-#Include resources.ahk
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-;#Warn  ; Enable warnings to assist with detecting common errors.
+﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+#Warn  ; Enable warnings to assist with detecting common errors.
 #SingleInstance Force
 
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
-
-
 SetKeyDelay 10, 60
 SetMouseDelay 10, 60
 
-; FF14WND = "ahk_class FFXIVGAME"/
+#Include menu.ahk
+#Include resources.ahk
+#Include regions.ahk
 
 
-global REGION_SELECT_DATA_CENTER := new Region(728, 466, 915, 491, Images.selectdatacenter)
-global REGION_OK := new Region(800, 500, 1100, 700, Images.ok)
-global REGION_CRYSTAL := new Region(790, 460, 900, 510, Images.crystal)
-
-
-global DATA_CENTERS := new DataCenters(2 ; home dc's index, start from 1 -> Crystal
+global dataCenters := new CDataCenters(2 ; home dc's index, start from 1 -> Crystal
 	, new DataCenter("Aether", "aether")
 	, new DataCenter("Crystal", "traveled", true)
 	, new DataCenter("Dynamis", "dynamis")
 	, new DataCenter("Primal", "primal"))
 	; order needs to be same as in game
-
-
-
-
-
-
-class RegionProto {
-
-	__New(Name, X1, Y1, X2, Y2) {
-		this.Name := Name
-		this.X1 := X1
-		this.Y1 := Y1
-		this.X2 := X2
-		this.Y2 := Y2
-	}
-
-	FullName(Suffix) {
-		return this.Name . Suffix
-	}
-
-	CreateRegion(Suffix) {
-		return new Region(this.FullName(Suffix), this.X1, this.Y1, this.X2, this.Y2, Images.Get(this.FullName(Suffix)))
-	}
-}
-
-REGION_PROTOS := [new RegionProto("ox", 0, 600, 600, 1080)
-	, new RegionProto("selectdatacenter", 600, 400, 1100, 700)
-	, new RegionProto("proceed", 500, 500, 1200, 1000)
-	, new RegionProto("ok", 200, 200, 1620, 800)
-	, new RegionProto("traveled", 0, 0, 600, 1080)
-	, new RegionProto("aether", 1000, 0, 1920, 400)
-	, new RegionProto("dynamis", 1000, 0, 1920, 400)
-	, new RegionProto("primal", 1000, 0, 1920, 400)
-	, new RegionProto("crystal", 600, 300, 1000, 600)]
-
-global regions = new Regions(REGION_PROTOS)
-
-class Regions {
-
-
-	__New(protos) {
-		this.regions := []
-		for i, proto in protos {
-			for j, scale in Scales {
-				this.regions[proto.FullName(scale)] := proto.CreateRegion(scale)
-			}
-		}
-	}
-
-	Initialize() {
-		this.Scale := 0
-		if (this.regions["ox10"].IsVisible()) {
-			this.Scale := 10
-		} else if (this.regions["ox15"].IsVisible()) {
-			this.Scale := 15
-		}
-		return this.Scale > 0
-	}
-
-	Get(key) {
-		return this.regions[key . this.Scale]
-	}
-}
 
 
 ; restart script hotkey
@@ -102,29 +31,29 @@ class Regions {
 ^!+p::
 	ShowGui() {
 		if (regions.Initialize()) {
-			Gui, -SysMenu ToolWindow
-			Gui, Add, Text,, Select DC you want to travel to:
-			for i, name in DATA_CENTERS.DcList() {
+			Gui, DcSelect:New ,-SysMenu ToolWindow
+			Gui, DcSelect:Add, Text,, Select DC you want to travel to:
+			for i, name in dataCenters.DcList() {
 				if (InStr(name, "-->")) {
-					Gui, Add, Button, Left gOnButton w150 Disabled, %name%
+					Gui, DcSelect:Add, Button, Left gOnButton w150 Disabled, %name%
 				} else {
-					Gui, Add, Button, Left gOnButton w150, %name%
+					Gui, DcSelect:Add, Button, Left gOnButton w150, %name%
 				}
 			}
-			Gui, Add, Text,,
-			Gui, Add, Text,, % "Currently on:`n" . DATA_CENTERS.CurrentDc.Name
-			Gui, Add, Button, gOnCancel, Cancel
-			Gui, Show,,
+			Gui, DcSelect:Add, Text,,
+			Gui, DcSelect:Add, Text,, % "Currently on:`n" . dataCenters.CurrentDc.Name
+			Gui, DcSelect:Add, Button, gOnCancel, Cancel
+			Gui, DcSelect:Show,,
 
 		}
 		return
 		OnButton:
 			name := A_GuiControl
-			Gui, Destroy
-			DATA_CENTERS.Travel(name)
+			Gui, DcSelect:Destroy
+			dataCenters.Travel(name)
 			return
 		OnCancel:
-			Gui, Destroy
+			Gui, DcSelect:Destroy
 			return
 	}
 
@@ -151,14 +80,14 @@ SafeSend(keys*) {
 }
 
 
-class DataCenters {
+class CDataCenters {
 
-	__New(DcHomeIndex, DcArray*) {
-		this.DcArray := DcArray
+	__New(dcHomeIndex, dcArray*) {
+		this.DcArray := dcArray
 		for i, dc in this.DcArray {
-			dc.Offset := i - DcHomeIndex
+			dc.Offset := i - dcHomeIndex
 		}
-		this.DcHome := this.DcArray[DcHomeIndex]
+		this.DcHome := this.DcArray[dcHomeIndex]
 		this.UnknownAwayDc := new DataCenter("Unknown Data Center Away From Home", new Region("asd", 1, 1, 2, 2, Images.ok)) ; Dummy region
 
 	}
@@ -181,24 +110,24 @@ class DataCenters {
 
 	DcList() {
 		this._RefreshCurrentDc()
-		DcNames := []
+		dcNames := []
 		for i, dc in this.DcArray {
-			dcname := dc.Name
+			dcName := dc.Name
 			if (dc == this.CurrentDc) {
-				DcNames.Push("--> " . dcname)
+				dcNames.Push("--> " . dcName)
 			}  else if (this.CurrentDc == this.UnknownAwayDc && dc != this.DcHome) {
-				DcNames.Push("  ? " . dcname)
+				dcNames.Push("  ? " . dcName)
 			} else {
-				DcNames.Push("    " . dcname)
+				dcNames.Push("    " . dcName)
 			}
 		}
-		return DcNames
+		return dcNames
 	}
 
 
-	Travel(Name) {
+	Travel(label) {
 		for i, dc in this.DcArray {
-			if (InStr(Name, dc.Name)) {
+			if (InStr(label, dc.Name)) {
 				travelTo := dc
 				break
 			}
@@ -229,9 +158,9 @@ class DataCenters {
 
 class DataCenter {
 
-	__New(Name, RegionName, InverseMatch := False) {
-		this.Name := Name
-		this.Matcher := new RegionMatcher(RegionName, InverseMatch)
+	__New(name, regionName, inverseMatch := False) {
+		this.Name := name
+		this.Matcher := new RegionMatcher(regionName, inverseMatch)
 	}
 
 	IsCurrent() {
@@ -306,58 +235,4 @@ class DataCenter {
 
 }
 
-class RegionMatcher {
-	__New(RegionName, Inverse := False) {
-		this.RegionName := RegionName
-		this.Inverse := Inverse
-	}
 
-	Matches() {
-		if (this.Inverse) {
-			return !regions.get(this.RegionName).IsVisible()
-		} else {
-			return regions.get(this.RegionName).IsVisible()
-		}
-	}
-}
-
-Test(file) {
-		ImageSearch,,, 0, 0, 1920, 1080, % "*100 *Trans00FF00 " . file
-		if (ErrorLevel == 0) {
-			return true
-		} else if (ErrorLevel == 1) {
-			return false
-		} else {
-			MsgBox % "Error: " . ErrorLevel . " " . this.hImage
-		}
-}
-
-class Region {
-
-	__New(Name, X1, Y1, X2, Y2, hImage) {
-		this.Name := Name
-		this.X1 := X1
-		this.Y1 := Y1
-		this.X2 := X2
-		this.Y2 := Y2
-		this.hImage := hImage
-	}
-
-
-	IsVisible() {
-		ImageSearch,,, % this.X1, % this.Y1, % this.X2, % this.Y2, % "*100 *Trans00FF00 HBITMAP:*" . this.hImage
-		if (ErrorLevel == 0) {
-			return true
-		} else if (ErrorLevel == 1) {
-			return false
-		} else {
-			MsgBox % "Failed too lookup region " . this.Name . "`nError: " . ErrorLevel . " " . this.hImage
-		}
-	}
-
-	AwaitUntilVisible() {
-		while(!this.IsVisible()) {
-			Sleep, 200
-		}
-	}
-}
