@@ -66,7 +66,12 @@ class CPcaps {
 pcap_init() {
 	hModule:= DllCall("LoadLibrary", "Str", A_WinDir . "\System32\Npcap\wpcap.dll", "Ptr")
 	if (ErrorLevel || !hModule) {
-		MsgBox % "Can't pcap load library. A_LastError: " . A_LastError . " ErrorLevel: " . ErrorLevel
+		MsgBox % A_WinDir . "\System32\Npcap\wpcap.dll"
+		if (A_LastError == 126) {
+			MsgBox Cannot find npcap library. Download and install npcap from https://npcap.com
+			ExitApp
+		}
+		MsgBox % "Can't load library pcap. A_LastError: " . A_LastError . " ErrorLevel: " . ErrorLevel
 		return false
 	}
 
