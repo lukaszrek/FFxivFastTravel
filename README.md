@@ -1,10 +1,13 @@
 # Installation
 
+You can use FastTravel script as standalone application OR script run through AutoHotkey.
+
+Either of them requires [Npcap](https://npcap.com) installed. If you use ACT you already have it installed. Otherwise you can download it [here](https://npcap.com/#download)
+
 ## Standalone executable
 
-1. Download [fasttravel.exe](https://github.com/lukaszrek/FFxivFastTravel/releases/latest/download/fasttravel.exe).
+1. Download and run [fasttravel.exe](https://github.com/lukaszrek/FFxivFastTravel/releases/latest/download/fasttravel.exe).
 
-You don't need to download or install anything else
 
 ## AutoHotkey Script
 
@@ -25,27 +28,13 @@ Alternatively you can run fasttravel as a AutoHotkey script:
 
 ## Troubleshooting
 
-### CTRL + ALT + SHIFT + P does not do anything
-
-1. Right click greed H icon in you system tray.
-1. Select options
-1. Increase image comparison sensitivity
-1. Save
-
-### Script is stuck on OK button (or any other part of Data Center travel process)
-
-1. Right click greed H icon in you system tray.
-1. Select options
-1. Descrese image comparison sensitivity
-1. Save
+1. You may need to run script as administrator.
 
 
 ## Known issues
 
-In general it will work only for Crystal Data Center.
-May not work if you use different UI settings than me.
-
-1. Tested on 1900x1080 resolution, borderless window
-1. May or may not work for other resulutions
-1. Will only work with 100% and 150% UI settings scaling
-1. Works only with dark theme
+1. Script does no longer reads screen to track travel progress so it should work with any 
+resolution / screen UI scale / shaders / theme
+1. You can press TAB during travel to alt tab and then press TAB again to come back to game. It is not very reliable 
+but should work good enough if it's done during waiting periods. Use TAB to go back to game, any other way would result in losing all future inputs
+1. Works only when your home data center is Crystal

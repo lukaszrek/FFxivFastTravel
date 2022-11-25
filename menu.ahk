@@ -14,7 +14,7 @@ InitializeMenu() {
 	Menu, Tray, Add, %VersionText%, NoOp
 	Menu, Tray, Disable, 1&
 	Menu, Tray, Add
-	Menu, Tray, Add, Options, Options
+;	Menu, Tray, Add, Options, Options
 	Menu, Tray, Add
 	Menu, Tray, Add, Exit, Exit
 }
