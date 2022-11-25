@@ -37,7 +37,7 @@ jobs:
         uses: nekocodeX/GitHub-Action-Ahk2Exe@v1.1.0
         with:
           in: fasttravel.ahk
-          base: Unicode 64-bit.bin
+          base: Unicode 64-bit
 
       - name: Relase Binary
         uses: svenstaro/upload-release-action@v2
